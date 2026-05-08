@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hearts Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --surface2: #1a1a26;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --accent: #e8365d;
+  --accent2: #ff6b8a;
+  --green: #2dce89;
+  --blue: #4a9eff;
+  --amber: #ffb347;
+  --text: #f0f0f8;
+  --muted: rgba(240,240,248,0.45);
+  --font-head: 'Unbounded', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;min-height:100vh;line-height:1.6}
+.noise{pointer-events:none;position:fixed;inset:0;opacity:.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");z-index:0}
+
+/* ── Layout ───────────────────────────────────── */
+.container{max-width:860px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+.center-wrap{max-width:420px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+.client-wrap{max-width:520px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+
+/* ── Header ───────────────────────────────────── */
+header{padding:32px 0 24px;border-bottom:1px solid var(--border)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.logo{font-family:var(--font-head);font-size:20px;font-weight:700;letter-spacing:-0.5px}
+.logo span{color:var(--accent)}
+.admin-badge{font-size:11px;padding:4px 10px;border-radius:99px;background:rgba(232,54,93,0.15);color:var(--accent2);border:1px solid rgba(232,54,93,0.25);font-weight:500;letter-spacing:.04em}
+.client-badge{font-size:11px;padding:4px 10px;border-radius:99px;background:rgba(74,158,255,0.12);color:#7ab8ff;border:1px solid rgba(74,158,255,0.2);font-weight:500}
+
+/* ── Stats grid ───────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:28px 0}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.stat-val{font-family:var(--font-head);font-size:28px;font-weight:700}
+.stat-val.red{color:var(--accent2)}
+.stat-val.green{color:var(--green)}
+.stat-val.blue{color:var(--blue)}
+.stat-val.amber{color:var(--amber)}
+
+/* ── Section ──────────────────────────────────── */
+.section{margin-bottom:24px}
+.section-title{font-family:var(--font-head);font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+
+/* ── Card ─────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:14px}
+.card-title{font-weight:500;font-size:15px;margin-bottom:16px}
+
+/* ── Forms ────────────────────────────────────── */
+.form-row{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.form-row label{font-size:13px;color:var(--muted);min-width:90px}
+input[type=text],input[type=number],input[type=password],select,textarea{
+  background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);
+  color:var(--text);font-family:var(--font-body);font-size:14px;padding:9px 14px;
+  outline:none;transition:border-color .2s;flex:1;min-width:120px;width:100%
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+select option{background:var(--surface2)}
+input.err{border-color:var(--accent)}
+textarea{resize:vertical;min-height:60px}
+
+/* ── Buttons ──────────────────────────────────── */
+.btn{
+  cursor:pointer;font-family:var(--font-body);font-size:14px;font-weight:500;
+  padding:9px 20px;border-radius:var(--radius-sm);border:none;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px
+}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border2)}
+.btn-ghost:hover{color:var(--text)}
+.btn-danger{background:transparent;color:var(--accent);border:1px solid rgba(232,54,93,0.3);font-size:12px;padding:5px 12px}
+.btn-danger:hover{background:rgba(232,54,93,0.1)}
+.btn-sm{font-size:12px;padding:5px 12px}
+.btn-full{width:100%;justify-content:center}
+.btn-back{background:transparent;border:1px solid var(--border2);color:var(--muted);margin-bottom:16px}
+.btn-back:hover{color:var(--text)}
+
+/* ── Client card (list item) ──────────────────── */
+.client-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:border-color .15s}
+.client-card:hover{border-color:var(--border2)}
+.client-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.client-left{display:flex;align-items:center;gap:12px}
+.avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:.02em}
+.client-name{font-family:var(--font-head);font-size:14px;font-weight:600}
+.client-note-text{font-size:12px;color:var(--muted);margin-top:2px}
+.badges{display:flex;gap:7px;flex-wrap:wrap}
+.badge{font-size:12px;padding:3px 11px;border-radius:99px;font-weight:500}
+.badge-total{background:rgba(255,255,255,0.06);color:var(--muted)}
+.badge-given{background:rgba(45,206,137,0.12);color:#5ddfaa;border:1px solid rgba(45,206,137,0.2)}
+.badge-left{background:rgba(232,54,93,0.12);color:var(--accent2);border:1px solid rgba(232,54,93,0.2)}
+.badge-today{background:rgba(74,158,255,0.12);color:#7ab8ff;border:1px solid rgba(74,158,255,0.2)}
+.badge-done{background:rgba(45,206,137,0.15);color:var(--green);border:1px solid rgba(45,206,137,0.3)}
+
+/* ── Progress bar ─────────────────────────────── */
+.pb-bg{height:5px;background:var(--border);border-radius:99px;overflow:hidden;margin:10px 0 6px}
+.pb-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .4s}
+.pb-fill.done{background:var(--green)}
+
+/* ── Client link row ──────────────────────────── */
+.client-link{display:flex;align-items:center;gap:8px;margin-top:10px}
+.link-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;font-size:12px;color:var(--muted);flex:1;word-break:break-all;font-family:monospace;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.copy-btn{cursor:pointer;background:transparent;border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--muted);font-size:12px;padding:6px 12px;white-space:nowrap;transition:all .15s}
+.copy-btn:hover{color:var(--text)}
+.copy-btn.copied{color:var(--green);border-color:rgba(45,206,137,0.4)}
+
+/* ── Log entry ────────────────────────────────── */
+.log-entry{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;gap:10px}
+.log-entry:last-child{border-bottom:none}
+.log-entry-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.log-icon{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px}
+.log-nick{color:var(--text);font-weight:500}
+.log-note{color:var(--muted);font-size:12px;margin-top:1px}
+.log-time{color:var(--muted);font-size:12px}
+.log-amount{color:var(--accent2);font-weight:600;margin-right:6px;white-space:nowrap}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px;padding:0 4px;transition:color .15s;flex-shrink:0}
+.del-btn:hover{color:var(--accent)}
+
+/* ── Tabs ─────────────────────────────────────── */
+.tabs{display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px;margin-bottom:24px}
+.tab{flex:1;padding:9px 12px;border-radius:10px;border:none;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--muted);transition:all .15s;text-align:center}
+.tab.active{background:var(--accent);color:#fff}
+
+/* ── Toast ────────────────────────────────────── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--green);color:#0a0a0f;font-weight:600;font-size:13px;padding:10px 22px;border-radius:99px;z-index:99;transition:transform .3s;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ── Login screen ─────────────────────────────── */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px 28px;width:100%;max-width:340px;margin:20px}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-title{font-family:var(--font-head);font-size:20px;font-weight:700;margin-bottom:6px}
+.login-sub{font-size:13px;color:var(--muted)}
+.err-msg{font-size:12px;color:var(--accent2);margin-top:6px}
+
+/* ── Client public view ───────────────────────── */
+.hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px 24px;margin-bottom:20px;text-align:center}
+.hero-name{font-family:var(--font-head);font-size:22px;font-weight:700;margin-bottom:20px}
+.ring-wrap{position:relative;width:160px;height:160px;margin:0 auto 24px}
+.ring-svg{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--surface2);stroke-width:10}
+.ring-fill{fill:none;stroke-width:10;stroke-linecap:round;transition:stroke-dasharray .8s cubic-bezier(.4,0,.2,1)}
+.ring-pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-num{font-family:var(--font-head);font-size:28px;font-weight:700}
+.ring-sub{font-size:12px;color:var(--muted)}
+.mini-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.mini-stat{background:var(--surface2);border-radius:var(--radius-sm);padding:14px 10px;text-align:center}
+.mini-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.mini-val{font-family:var(--font-head);font-size:20px;font-weight:700}
+.done-banner{background:rgba(45,206,137,0.12);border:1px solid rgba(45,206,137,0.25);border-radius:var(--radius);padding:16px 20px;text-align:center;margin-bottom:20px}
+.done-banner h3{font-family:var(--font-head);font-size:16px;color:var(--green);margin-bottom:4px}
+.today-banner{background:rgba(74,158,255,0.1);border:1px solid rgba(74,158,255,0.2);border-radius:var(--radius);padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:13px}
+
+/* ── Detail view stats ────────────────────────── */
+.detail-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.detail-stat{background:var(--surface2);border-radius:var(--radius-sm);padding:12px;text-align:center}
+.detail-stat-val{font-family:var(--font-head);font-size:22px;font-weight:700;margin-bottom:2px}
+.detail-stat-label{font-size:11px;color:var(--muted)}
+
+/* ── Misc ─────────────────────────────────────── */
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:24px 0}
+.danger-zone{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.refresh-hint{text-align:center;font-size:12px;color:var(--muted);margin-top:16px}
+.divider{height:1px;background:var(--border);margin:12px 0}
+
+@media(max-width:600px){
+  .form-row{flex-direction:column;align-items:stretch}
+  .form-row label{min-width:auto}
+  .client-header{flex-direction:column}
+  .header-inner{flex-direction:column;align-items:flex-start}
+  .detail-stats{grid-template-columns:1fr 1fr}
+  .stats-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="noise"></div>
+
+<!-- ── VIEWS ── -->
+<div id="v-login" style="display:none"></div>
+<div id="v-dash" style="display:none"></div>
+<div id="v-detail" style="display:none"></div>
+<div id="v-public" style="display:none"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════
+const ADMIN_PASSWORD = 'hearts2025';
+const STORAGE_KEY    = 'hearts_v4';
+const CLIENT_COLORS  = ['#D4537E','#7F77DD','#1D9E75','#D85A30','#378ADD','#BA7517','#6B5CE7','#3B6D11'];
+
+// ════════════════════════════════════════════════
+// STORAGE
+// ════════════════════════════════════════════════
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { clients: [] }; }
+  catch { return { clients: [] }; }
+}
+function saveState(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+
+// ════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════
+function todayKey() { return new Date().toISOString().slice(0,10); }
+
+function formatDateTime(iso) {
+  return new Date(iso).toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function genId() { return Math.random().toString(36).slice(2,9); }
+
+function initials(name) {
+  return name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0,2);
+}
+
+function clientColor(id) {
+  return CLIENT_COLORS[parseInt(id, 36) % CLIENT_COLORS.length];
+}
+
+function clientStats(c) {
+  const today = todayKey();
+  const gifted      = c.history.reduce((s,e) => s + e.amount, 0);
+  const giftedToday = c.history.filter(e => e.date.slice(0,10) === today).reduce((s,e) => s + e.amount, 0);
+  const remaining   = Math.max(0, c.ordered - gifted);
+  const percent     = c.ordered ? Math.min(100, Math.round(gifted / c.ordered * 100)) : 0;
+  const done        = c.ordered > 0 && gifted >= c.ordered;
+  return { gifted, giftedToday, remaining, percent, done };
+}
+
+function showToast(msg, dur = 2000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function heartWord(n) {
+  if (n % 10 === 1 && n % 100 !== 11) return 'сердце';
+  if ([2,3,4].includes(n % 10) && ![12,13,14].includes(n % 100)) return 'сердца';
+  return 'сердец';
+}
+
+function show(id) {
+  ['v-login','v-dash','v-detail','v-public'].forEach(v => {
+    document.getElementById(v).style.display = v === id ? '' : 'none';
+  });
+}
+
+function clientLink(id) {
+  return window.location.href.split('#')[0] + '#client-' + id;
+}
+
+// ════════════════════════════════════════════════
+// ROUTING
+// ════════════════════════════════════════════════
+let authed = false;
+let currentDetailId = null;
+
+function route() {
+  const hash = window.location.hash;
+  if (hash.startsWith('#client-')) {
+    const id = hash.slice(8);
+    renderPublic(id);
+    show('v-public');
+  } else if (hash.startsWith('#detail-') && authed) {
+    currentDetailId = hash.slice(8);
+    renderDetail(currentDetailId);
+    show('v-detail');
+  } else {
+    if (!authed) {
+      renderLogin();
+      show('v-login');
+    } else {
+      renderDash();
+      show('v-dash');
+    }
+  }
+}
+
+window.addEventListener('hashchange', route);
+
+// ════════════════════════════════════════════════
+// VIEW: LOGIN
+// ════════════════════════════════════════════════
+function renderLogin() {
+  document.getElementById('v-login').innerHTML = `
+    <div class="login-wrap">
+      <div class="login-card">
+        <div class="login-logo">
+          <div style="font-size:36px;margin-bottom:10px">❤</div>
+          <div class="login-title">hearts<span style="color:var(--accent)">.</span>tracker</div>
+          <div class="login-sub" style="margin-top:4px">Введите пароль для входа</div>
+        </div>
+        <input type="password" id="login-pass" placeholder="Пароль" style="margin-bottom:8px"
+          onkeydown="if(event.key==='Enter')doLogin()">
+        <div id="login-err" class="err-msg" style="display:none">Неверный пароль</div>
+        <button class="btn btn-primary btn-full" style="margin-top:12px" onclick="doLogin()">Войти</button>
+      </div>
+    </div>`;
+  setTimeout(() => document.getElementById('login-pass')?.focus(), 50);
+}
+
+function doLogin() {
+  const pass = document.getElementById('login-pass').value;
+  if (pass === ADMIN_PASSWORD) {
+    authed = true;
+    renderDash();
+    show('v-dash');
+  } else {
+    const inp = document.getElementById('login-pass');
+    const err = document.getElementById('login-err');
+    inp.classList.add('err');
+    err.style.display = '';
+    setTimeout(() => { inp.classList.remove('err'); err.style.display = 'none'; }, 2000);
+  }
+}
+
+// ════════════════════════════════════════════════
+// VIEW: DASHBOARD
+// ════════════════════════════════════════════════
+let dashTab = 'overview';
+
+function renderDash(tab) {
+  if (tab) dashTab = tab;
+  const s = loadState();
+  const today = todayKey();
+
+  const totalOrdered   = s.clients.reduce((a,c) => a + c.ordered, 0);
+  const totalGifted    = s.clients.reduce((a,c) => a + clientStats(c).gifted, 0);
+  const totalRemaining = s.clients.reduce((a,c) => a + clientStats(c).remaining, 0);
+  const totalToday     = s.clients.reduce((a,c) => a + clientStats(c).giftedToday, 0);
+
+  const clientCards = (showLink, showDel) => s.clients.length
+    ? s.clients.map(c => clientCardHtml(c, showLink, showDel)).join('')
+    : '<div class="empty">Нет клиентов. Добавь в разделе «Клиенты»</div>';
+
+  // History entries flat
+  const allEntries = [];
+  s.clients.forEach(c => c.history.forEach(e => allEntries.push({ ...e, clientName: c.nick || c.name, clientId: c.id })));
+  allEntries.sort((a,b) => b.date.localeCompare(a.date));
+
+  const tabs = ['overview','clients','give','history'];
+  const tabLabels = ['Обзор','Клиенты','Передать','История'];
+
+  document.getElementById('v-dash').innerHTML = `
+    <div class="noise"></div>
+    <div class="container">
+      <header>
+        <div class="header-inner">
+          <div class="logo">hearts<span>.</span>tracker</div>
+          <span class="admin-badge">admin</span>
+        </div>
+      </header>
+
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-label">❤ всего заказано</div><div class="stat-val amber">${totalOrdered}</div></div>
+        <div class="stat"><div class="stat-label">✓ отдано</div><div class="stat-val green">${totalGifted}</div></div>
+        <div class="stat"><div class="stat-label">⏳ осталось</div><div class="stat-val red">${totalRemaining}</div></div>
+        <div class="stat"><div class="stat-label">📅 сегодня</div><div class="stat-val blue">${totalToday}</div></div>
+      </div>
+
+      <div class="tabs">
+        ${tabs.map((t,i) => `<button class="tab${dashTab===t?' active':''}" onclick="renderDash('${t}')">${tabLabels[i]}</button>`).join('')}
+      </div>
+
+      ${dashTab === 'overview' ? `
+        <div class="section">
+          <div class="section-title">клиенты</div>
+          ${clientCards(true, false)}
+        </div>
+      ` : ''}
+
+      ${dashTab === 'clients' ? `
+        <div class="card">
+          <div class="card-title">Добавить клиента</div>
+          <div class="form-row">
+            <label>Ник / имя</label>
+            <input type="text" id="new-nick" placeholder="Имя игрока" onkeydown="if(event.key==='Enter')addClient()">
+          </div>
+          <div class="form-row">
+            <label>Заказ (сердец)</label>
+            <input type="number" id="new-order" min="1" placeholder="100" style="max-width:120px">
+          </div>
+          <div class="form-row">
+            <label>Заметка</label>
+            <input type="text" id="new-note" placeholder="Необязательно">
+          </div>
+          <button class="btn btn-primary" onclick="addClient()" style="margin-top:6px">+ Добавить</button>
+        </div>
+        <div class="section-title" style="margin-top:8px">все клиенты</div>
+        ${clientCards(true, true)}
+        <div class="danger-zone">
+          <button class="btn btn-danger" onclick="resetAll()">Сбросить всё</button>
+        </div>
+      ` : ''}
+
+      ${dashTab === 'give' ? `
+        <div class="card">
+          <div class="card-title">Записать передачу</div>
+          <div class="form-row">
+            <label>Клиент</label>
+            <select id="sel-client">
+              <option value="">— выберите —</option>
+              ${s.clients.map(c => { const st = clientStats(c); return `<option value="${c.id}">${c.nick||c.name} (осталось: ${st.remaining})</option>`; }).join('')}
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Сердец</label>
+            <input type="number" id="give-amount" min="1" value="1" style="max-width:120px">
+          </div>
+          <div class="form-row">
+            <label>Заметка</label>
+            <input type="text" id="give-note" placeholder="Необязательно">
+          </div>
+          <button class="btn btn-primary" onclick="addGiftFromDash()" style="margin-top:6px">❤ Записать</button>
+        </div>
+      ` : ''}
+
+      ${dashTab === 'history' ? `
+        <div class="card">
+          <div class="card-title">Вся история</div>
+          ${allEntries.length ? allEntries.map(e => `
+            <div class="log-entry">
+              <div class="log-entry-left">
+                <div class="log-icon" style="background:${clientColor(e.clientId)}22">
+                  <span style="color:${clientColor(e.clientId)}">❤</span>
+                </div>
+                <div>
+                  <div class="log-nick">${e.clientName}</div>
+                  ${e.note ? `<div class="log-note">${e.note}</div>` : ''}
+                  <div class="log-time">${formatDateTime(e.date)}</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center">
+                <span class="log-amount">+${e.amount} ❤</span>
+                <button class="del-btn" title="Удалить" onclick="deleteEntryGlobal('${e.clientId}','${e.id}')">✕</button>
+              </div>
+            </div>`).join('') : '<div class="empty">Нет записей</div>'}
+        </div>
+        ${allEntries.length ? `<div class="danger-zone"><button class="btn btn-danger" onclick="resetToday()">Сбросить сегодня</button></div>` : ''}
+      ` : ''}
+    </div>`;
+}
+
+function clientCardHtml(c, showLink, showDel) {
+  const s  = clientStats(c);
+  const color = clientColor(c.id);
+  const link  = clientLink(c.id);
+  const ini   = initials(c.nick || c.name);
+  return `
+    <div class="client-card" onclick="goDetail('${c.id}')">
+      <div class="client-header">
+        <div class="client-left">
+          <div class="avatar" style="background:${color}">${ini}</div>
+          <div>
+            <div class="client-name">${c.nick || c.name}</div>
+            ${(c.note||c.createdAt) ? `<div class="client-note-text">${c.note || 'добавлен '+c.createdAt}</div>` : ''}
+          </div>
+        </div>
+        <div class="badges">
+          <span class="badge badge-total">📦 ${c.ordered}</span>
+          <span class="badge badge-given">✓ ${s.gifted}</span>
+          <span class="badge badge-left">⏳ ${s.remaining}</span>
+          ${s.giftedToday ? `<span class="badge badge-today">сегодня ${s.giftedToday}</span>` : ''}
+          ${s.done ? `<span class="badge badge-done">✓ готово</span>` : ''}
+        </div>
+      </div>
+      <div class="pb-bg"><div class="pb-fill${s.done?' done':''}" style="width:${s.percent}%"></div></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${s.percent}% выполнено</div>
+      ${showLink ? `
+        <div class="client-link" onclick="event.stopPropagation()">
+          <div class="link-box">${link}</div>
+          <button class="copy-btn" id="cp-${c.id}" onclick="copyClientLink('${c.id}')">Копировать</button>
+          ${showDel ? `<button class="btn btn-danger btn-sm" onclick="deleteClient('${c.id}')">✕</button>` : ''}
+        </div>` : ''}
+    </div>`;
+}
+
+function addClient() {
+  const nick  = (document.getElementById('new-nick')?.value || '').trim();
+  const order = parseInt(document.getElementById('new-order')?.value) || 0;
+  const note  = (document.getElementById('new-note')?.value || '').trim();
+  if (!nick || order < 1) { showToast('Введи имя и количество сердец'); return; }
+  const s = loadState();
+  s.clients.push({ id: genId(), nick, name: nick, note, ordered: order, history: [], createdAt: new Date().toLocaleDateString('ru-RU') });
+  saveState(s);
+  renderDash('clients');
+}
+
+function deleteClient(id) {
+  if (!confirm('Удалить клиента и всю его историю?')) return;
+  const s = loadState();
+  s.clients = s.clients.filter(c => c.id !== id);
+  saveState(s);
+  renderDash();
+}
+
+function addGiftFromDash() {
+  const cid    = document.getElementById('sel-client')?.value;
+  const amount = parseInt(document.getElementById('give-amount')?.value) || 0;
+  const note   = (document.getElementById('give-note')?.value || '').trim();
+  if (!cid || amount < 1) { showToast('Выбери клиента и кол-во'); return; }
+  const s = loadState();
+  const ci = s.clients.findIndex(c => c.id === cid);
+  if (ci < 0) return;
+  s.clients[ci].history.push({ id: genId(), date: new Date().toISOString(), amount, note });
+  saveState(s);
+  showToast('Записано!');
+  renderDash('overview');
+}
+
+function deleteEntryGlobal(clientId, entryId) {
+  const s = loadState();
+  const ci = s.clients.findIndex(c => c.id === clientId);
+  if (ci < 0) return;
+  s.clients[ci].history = s.clients[ci].history.filter(e => e.id !== entryId);
+  saveState(s);
+  renderDash('history');
+}
+
+function resetToday() {
+  if (!confirm('Удалить все записи за сегодня?')) return;
+  const today = todayKey();
+  const s = loadState();
+  s.clients.forEach(c => { c.history = c.history.filter(e => e.date.slice(0,10) !== today); });
+  saveState(s);
+  renderDash('history');
+}
+
+function resetAll() {
+  if (!confirm('Сбросить ВСЁ? Клиенты и история будут удалены.')) return;
+  saveState({ clients: [] });
+  renderDash('clients');
+}
+
+function copyClientLink(id) {
+  const link = clientLink(id);
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = document.getElementById('cp-'+id);
+    if (btn) { btn.textContent = '✓ Скопировано'; btn.classList.add('copied'); setTimeout(() => { btn.textContent = 'Копировать'; btn.classList.remove('copied'); }, 2000); }
+  });
+}
+
+function goDetail(id) {
+  window.location.hash = '#detail-' + id;
+}
+
+// ════════════════════════════════════════════════
+// VIEW: CLIENT DETAIL (admin)
+// ════════════════════════════════════════════════
+function renderDetail(id) {
+  const s = loadState();
+  const c = s.clients.find(x => x.id === id);
+  if (!c) { window.location.hash = ''; return; }
+
+  const st    = clientStats(c);
+  const color = clientColor(c.id);
+  const ini   = initials(c.nick || c.name);
+
+  document.getElementById('v-detail').innerHTML = `
+    <div class="container" style="padding-top:32px">
+      <button class="btn btn-back btn-sm" onclick="window.location.hash=''">← Назад</button>
+
+      <div class="card" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+          <div class="avatar" style="background:${color};width:52px;height:52px;font-size:16px">${ini}</div>
+          <div style="flex:1">
+            <div style="font-family:var(--font-head);font-size:18px;font-weight:700">${c.nick||c.name}</div>
+            ${c.note ? `<div style="font-size:13px;color:var(--muted);margin-top:2px">${c.note}</div>` : ''}
+          </div>
+          <button class="copy-btn" id="det-copy" onclick="copyDetailLink('${c.id}')">🔗 Ссылка</button>
+        </div>
+
+        <div class="detail-stats">
+          <div class="detail-stat"><div class="detail-stat-val amber">${c.ordered}</div><div class="detail-stat-label">Заказано</div></div>
+          <div class="detail-stat"><div class="detail-stat-val green">${st.gifted}</div><div class="detail-stat-label">Подарено</div></div>
+          <div class="detail-stat"><div class="detail-stat-val red">${st.remaining}</div><div class="detail-stat-label">Осталось</div></div>
+          <div class="detail-stat"><div class="detail-stat-val blue">${st.giftedToday}</div><div class="detail-stat-label">Сегодня</div></div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;margin-bottom:6px">
+          <span style="font-size:12px;color:var(--muted)">Прогресс</span>
+          <span style="font-size:12px;font-weight:600;color:${color}">${st.percent}%</span>
+        </div>
+        <div class="pb-bg" style="height:8px"><div class="pb-fill${st.done?' done':''}" style="width:${st.percent}%;background:${st.done?'var(--green)':color}"></div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">Записать передачу</div>
+        <div class="form-row">
+          <label>Сердец</label>
+          <input type="number" id="d-amount" min="1" value="1" style="max-width:120px">
+          <input type="text" id="d-note" placeholder="Заметка (необязательно)">
+          <button class="btn btn-primary" onclick="addGiftDetail('${c.id}')">❤ Записать</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="showAddOrder('${c.id}')">+ Увеличить заказ</button>
+        <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="deleteClientAndBack('${c.id}')">✕ Удалить клиента</button>
+      </div>
+
+      <div id="add-order-form" style="display:none" class="card" style="margin-bottom:14px">
+        <div class="card-title">Добавить к заказу</div>
+        <div class="form-row">
+          <label>Количество</label>
+          <input type="number" id="more-order" min="1" placeholder="50" style="max-width:120px">
+          <button class="btn btn-primary" onclick="commitAddOrder('${c.id}')">Добавить</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('add-order-form').style.display='none'">Отмена</button>
+        </div>
+      </div>
+
+      <div class="section-title">история передач</div>
+      <div class="card">
+        ${c.history.length ? [...c.history].reverse().map(e => `
+          <div class="log-entry">
+            <div class="log-entry-left">
+              <div class="log-icon" style="background:${color}22"><span style="color:${color}">❤</span></div>
+              <div>
+                <div style="font-weight:500;font-size:13px">+${e.amount} ${heartWord(e.amount)}</div>
+                ${e.note ? `<div class="log-note">${e.note}</div>` : ''}
+                <div class="log-time">${formatDateTime(e.date)}</div>
+              </div>
+            </div>
+            <button class="del-btn" onclick="removeEntry('${c.id}','${e.id}')">✕</button>
+          </div>`).join('') : '<div class="empty">Ещё ничего не передано</div>'}
+      </div>
+    </div>`;
+}
+
+function copyDetailLink(id) {
+  navigator.clipboard.writeText(clientLink(id)).then(() => {
+    const btn = document.getElementById('det-copy');
+    if (btn) { btn.textContent = '✓ Скопировано!'; setTimeout(() => btn.textContent = '🔗 Ссылка', 2000); }
+  });
+}
+
+function addGiftDetail(clientId) {
+  const amount = parseInt(document.getElementById('d-amount')?.value) || 0;
+  const note   = (document.getElementById('d-note')?.value || '').trim();
+  if (amount < 1) { showToast('Введи кол-во'); return; }
+  const s = loadState();
+  const ci = s.clients.findIndex(c => c.id === clientId);
+  if (ci < 0) return;
+  s.clients[ci].history.push({ id: genId(), date: new Date().toISOString(), amount, note });
+  saveState(s);
+  showToast('Записано!');
+  renderDetail(clientId);
+}
+
+function removeEntry(clientId, entryId) {
+  const s = loadState();
+  const ci = s.clients.findIndex(c => c.id === clientId);
+  if (ci < 0) return;
+  s.clients[ci].history = s.clients[ci].history.filter(e => e.id !== entryId);
+  saveState(s);
+  renderDetail(clientId);
+}
+
+function showAddOrder(clientId) {
+  const el = document.getElementById('add-order-form');
+  if (el) el.style.display = '';
+}
+
+function commitAddOrder(clientId) {
+  const n = parseInt(document.getElementById('more-order')?.value) || 0;
+  if (n < 1) return;
+  const s = loadState();
+  const ci = s.clients.findIndex(c => c.id === clientId);
+  if (ci < 0) return;
+  s.clients[ci].ordered += n;
+  saveState(s);
+  renderDetail(clientId);
+}
+
+function deleteClientAndBack(id) {
+  if (!confirm('Удалить клиента?')) return;
+  const s = loadState();
+  s.clients = s.clients.filter(c => c.id !== id);
+  saveState(s);
+  window.location.hash = '';
+}
+
+// ════════════════════════════════════════════════
+// VIEW: CLIENT PUBLIC
+// ════════════════════════════════════════════════
+function renderPublic(id) {
+  const s = loadState();
+  const c = s.clients.find(x => x.id === id);
+
+  const el = document.getElementById('v-public');
+
+  if (!c) {
+    el.innerHTML = `
+      <div class="client-wrap" style="padding-top:40px">
+        <div class="logo" style="font-family:var(--font-head);font-size:17px;font-weight:700;margin-bottom:6px">hearts<span style="color:var(--accent)">.</span>tracker</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:40px">страница клиента</div>
+        <div style="text-align:center;padding:60px 0">
+          <div style="font-size:48px;margin-bottom:16px">🔍</div>
+          <h2 style="font-family:var(--font-head);font-size:18px;margin-bottom:8px">Клиент не найден</h2>
+          <p style="color:var(--muted);font-size:14px">Ссылка устарела или неверная.<br>Попроси продавца скинуть новую.</p>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const st    = clientStats(c);
+  const color = clientColor(c.id);
+  const circ  = 2 * Math.PI * 70;
+  const dash  = circ * st.percent / 100;
+
+  el.innerHTML = `
+    <div class="noise"></div>
+    <div class="client-wrap" style="padding-top:32px;padding-bottom:40px">
+      <div class="logo" style="font-family:var(--font-head);font-size:17px;font-weight:700;margin-bottom:6px">hearts<span style="color:var(--accent)">.</span>tracker</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:24px">страница клиента</div>
+
+      <div class="hero">
+        <div class="hero-name">${c.nick||c.name}</div>
+        ${c.note ? `<div style="font-size:13px;color:var(--muted);margin-bottom:16px">${c.note}</div>` : ''}
+        <div class="ring-wrap">
+          <svg class="ring-svg" width="160" height="160" viewBox="0 0 160 160">
+            <circle class="ring-bg" cx="80" cy="80" r="70"/>
+            <circle class="ring-fill" id="pub-ring" cx="80" cy="80" r="70"
+              stroke="${st.done ? 'var(--green)' : color}"
+              stroke-dasharray="0 999"/>
+          </svg>
+          <div class="ring-pct">
+            <div class="ring-num" style="color:${st.done?'var(--green)':color}">${st.percent}%</div>
+            <div class="ring-sub">выполнено</div>
+          </div>
+        </div>
+        <div class="mini-stats">
+          <div class="mini-stat"><div class="mini-label">заказ</div><div class="mini-val">${c.ordered}</div></div>
+          <div class="mini-stat"><div class="mini-label">получено</div><div class="mini-val" style="color:var(--green)">${st.gifted}</div></div>
+          <div class="mini-stat"><div class="mini-label">осталось</div><div class="mini-val" style="color:var(--accent2)">${st.remaining}</div></div>
+        </div>
+      </div>
+
+      ${st.done ? `
+        <div class="done-banner">
+          <h3>Заказ выполнен! 🎉</h3>
+          <p>Все сердца переданы. Спасибо!</p>
+        </div>` : ''}
+
+      ${st.giftedToday > 0 ? `
+        <div class="today-banner">
+          <span>✨</span>
+          <span>Сегодня подарено: <strong>${st.giftedToday} ${heartWord(st.giftedToday)}</strong></span>
+        </div>` : ''}
+
+      <div class="section-title">история передач</div>
+      <div class="card">
+        ${c.history.length ? [...c.history].reverse().map(e => `
+          <div class="log-entry">
+            <div class="log-entry-left">
+              <div class="log-icon" style="background:${color}22"><span style="color:${color}">❤</span></div>
+              <div>
+                <div style="font-weight:500;font-size:13px">+${e.amount} ${heartWord(e.amount)}</div>
+                ${e.note ? `<div class="log-note">${e.note}</div>` : ''}
+                <div class="log-time">${formatDateTime(e.date)}</div>
+              </div>
+            </div>
+            <div class="log-amount">+${e.amount}</div>
+          </div>`).join('') : '<div class="empty">Ещё ничего не передано</div>'}
+      </div>
+
+      <div class="refresh-hint">Данные обновляются при перезагрузке</div>
+      <div style="text-align:center;margin-top:8px">
+        <button class="btn btn-ghost btn-sm" onclick="location.reload()">↻ Обновить</button>
+      </div>
+    </div>`;
+
+  // Animate ring after render
+  setTimeout(() => {
+    const ring = document.getElementById('pub-ring');
+    if (ring) ring.setAttribute('stroke-dasharray', `${dash} ${circ}`);
+  }, 100);
+}
+
+// ════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════
+route();
+</script>
+</body>
+</html>
